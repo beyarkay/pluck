@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 620px;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      padding: 12px;
+    }
+    h2 { font-size: 14px; font-weight: 600; color: #fff; }
+
+    /* ── Preset cards ── */
+    .preset {
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    .preset-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .preset-name   { font-weight: 600; color: #fff; }
+    .preset-format { font-family: monospace; font-size: 11px; color: #555; margin-bottom: 4px; word-break: break-all; }
+    .preset-preview {
+      font-family: monospace; font-size: 12px;
+      color: #a3e635; background: #1a2a0a;
+      border: 1px solid #2a3a1a; border-radius: 4px;
+      padding: 5px 8px; margin-bottom: 8px;
+      word-break: break-all; min-height: 26px;
+    }
+    .preset-preview.preview-warn { color: #fb923c; background: #1a1200; border-color: #3a2a00; }
+
+    /* ── Buttons ── */
+    .btn { border: none; border-radius: 4px; cursor: pointer; font-size: 12px; padding: 5px 10px; font-family: system-ui; }
+    .btn-copy { background: #3b82f6; color: #fff; padding: 6px 14px; width: 100%; font-size: 13px; font-weight: 500; }
+    .btn-copy:hover { background: #2563eb; }
+    .btn-copy.success { background: #16a34a; }
+    .btn-copy.error   { background: #dc2626; }
+    .btn-sm { background: #333; color: #bbb; padding: 3px 8px; font-size: 11px; }
+    .btn-sm:hover { background: #444; color: #fff; }
+    .btn-danger { background: #7f1d1d; color: #fca5a5; }
+    .btn-danger:hover { background: #991b1b; }
+    .actions { display: flex; gap: 6px; margin-top: 10px; }
+
+    #add-btn {
+      background: #1e3a2f; color: #4ade80;
+      border: 1px dashed #4ade80; border-radius: 6px;
+      width: 100%; padding: 8px; cursor: pointer;
+      font-size: 13px; margin-bottom: 8px;
+    }
+    #add-btn:hover { background: #14532d; }
+
+    /* ── Edit view ── */
+    #edit-view { display: none; }
+    .edit-topbar {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    }
+    .edit-topbar h2 { flex: 1; }
+    .btn-done {
+      background: #1d4ed8; color: #fff;
+      padding: 5px 14px; font-size: 12px; font-weight: 500;
+    }
+    .btn-done:hover { background: #1e40af; }
+    .btn-discard { background: none; border: none; color: #555; font-size: 11px; cursor: pointer; padding: 4px; }
+    .btn-discard:hover { color: #999; }
+
+    /* ── Edit live preview ── */
+    .edit-preview-wrap { margin-bottom: 10px; }
+    .edit-preview-label { font-size: 10px; color: #555; margin-bottom: 3px; }
+    #edit-preview {
+      font-family: monospace; font-size: 12px;
+      color: #a3e635; background: #1a2a0a;
+      border: 1px solid #2a3a1a; border-radius: 4px;
+      padding: 6px 8px; word-break: break-all; min-height: 28px;
+    }
+    #edit-preview.preview-warn   { color: #fb923c; background: #1a1200; border-color: #3a2a00; }
+    #edit-preview.preview-empty  { color: #555; font-style: italic; }
+
+    /* ── Form fields ── */
+    .field { margin-bottom: 10px; }
+    label  { display: block; font-size: 11px; color: #888; margin-bottom: 3px; }
+    input[type=text], select {
+      width: 100%; background: #2a2a2a; border: 1px solid #444;
+      border-radius: 4px; color: #e0e0e0; font-size: 12px;
+      padding: 5px 8px; font-family: system-ui;
+    }
+    input[type=text]:focus, select:focus { outline: none; border-color: #3b82f6; }
+
+    /* ── Selector rows ── */
+    .sel-wrap   { margin-bottom: 6px; }
+    .selector-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 58px 68px 24px;
+      gap: 4px; align-items: center;
+    }
+    .selector-row input, .selector-row select { font-size: 11px; padding: 4px 6px; }
+    .remove-sel {
+      background: #3a1515; color: #f87171;
+      border: none; border-radius: 3px; cursor: pointer;
+      font-size: 14px; line-height: 1; padding: 3px 6px;
+    }
+    .remove-sel:hover { background: #7f1d1d; }
+
+    .transform-row {
+      display: flex; align-items: center;
+      gap: 6px; margin-top: 3px; padding-left: 4px;
+    }
+    .tx-label { font-size: 10px; color: #555; white-space: nowrap; flex-shrink: 0; }
+    .tx-input {
+      flex: 1; font-size: 11px !important; padding: 3px 6px !important;
+      color: #a78bfa !important; background: #1a1030 !important;
+      border-color: #3a2060 !important; font-family: monospace !important;
+    }
+    .tx-help {
+      flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+      background: #333; color: #888; font-size: 11px;
+      text-align: center; line-height: 18px; cursor: help; user-select: none;
+    }
+    .tx-help:hover { background: #444; color: #ccc; }
+
+    #add-selector-btn {
+      background: none; border: 1px dashed #555; border-radius: 4px;
+      color: #888; cursor: pointer; font-size: 11px; padding: 4px 8px;
+      width: 100%; margin-bottom: 10px;
+    }
+    #add-selector-btn:hover { border-color: #888; color: #ccc; }
+
+    .format-hint { font-size: 10px; color: #555; margin-top: 3px; font-family: monospace; }
+
+    hr { border: none; border-top: 1px solid #2a2a2a; margin: 10px 0; }
+
+    .sel-col-headers {
+      display: grid;
+      grid-template-columns: 80px 1fr 58px 68px 24px;
+      gap: 4px; margin-bottom: 4px;
+    }
+    .sel-col-headers span { font-size: 10px; color: #555; }
+  </style>
+</head>
+<body>
+
+<!-- ── Main view ── -->
+<div id="main-view">
+  <h2 style="margin-bottom:10px">🤏 Pluck</h2>
+  <div id="presets-container"></div>
+  <button id="add-btn">+ New Preset</button>
+</div>
+
+<!-- ── Edit view ── -->
+<div id="edit-view">
+  <div class="edit-topbar">
+    <h2 id="edit-title">Edit Preset</h2>
+    <button class="btn btn-discard" id="discard-btn">Discard changes</button>
+    <button class="btn btn-done"    id="done-btn">Done ✓</button>
+  </div>
+
+  <div class="field">
+    <label>Preset Name</label>
+    <input type="text" id="edit-name" placeholder="e.g. Rightmove Listing">
+  </div>
+
+  <div class="field">
+    <label>Format Template</label>
+    <input type="text" id="edit-format" placeholder="{price},{url}">
+    <div class="format-hint">Use {key} for each selector — e.g.&nbsp; {price} — {url}</div>
+  </div>
+
+  <div class="edit-preview-wrap">
+    <div class="edit-preview-label">Live preview</div>
+    <div id="edit-preview" class="preview-empty">configure selectors below…</div>
+  </div>
+
+  <hr>
+
+  <div class="field">
+    <label>Selectors</label>
+    <div class="sel-col-headers">
+      <span>Key</span><span>Selector</span><span>Type</span><span>Attribute</span><span></span>
+    </div>
+    <div id="selectors-list"></div>
+    <button id="add-selector-btn">+ Add Selector</button>
+  </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

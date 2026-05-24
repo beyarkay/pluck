@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "Pluck",
+  "version": "1.0",
+  "description": "Pluck values off a page with custom selectors and copy them to the clipboard",
+  "permissions": ["activeTab", "clipboardWrite", "storage"],
+  "icons": {
+    "48": "icon.svg",
+    "96": "icon.svg"
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "Pluck",
+    "default_icon": "icon.svg"
+  }
+}
