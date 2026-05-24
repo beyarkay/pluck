@@ -142,8 +142,7 @@ async function copyPreset(preset, btn) {
   try {
     const data = await extractPreset(preset);
     await navigator.clipboard.writeText(applyFormat(preset, data));
-    btn.textContent = "✓ Copied!"; btn.classList.add("success");
-    setTimeout(() => { btn.textContent = orig; btn.classList.remove("success"); }, 1500);
+    window.close();
   } catch(err) {
     btn.textContent = "✗ Error"; btn.classList.add("error");
     console.error(err);
