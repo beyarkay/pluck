@@ -41,6 +41,12 @@ Defined inside `applyTransforms` (which lives inside `buildExtractionCode`'s tem
 - `regex_remove` always uses the `g` flag; `regex_extract` uses none. There is no syntax for passing flags.
 - All transforms fail silently (caught by a `try/catch` that swallows errors).
 
+## Format modes
+
+A preset's `formatMode` is either `"template"` (use `{key}` placeholders in `preset.format`) or `"separator"` (join `Object.values(data)` with `preset.separator`). Both stored fields are kept on the preset regardless of which mode is active, so toggling modes in the edit view does not lose the other mode's value. `applyFormat(preset, data)` and `formatPreviewString(preset)` are the two dispatch points. Adding a third format mode means: new branch in both functions, new mode button in `popup.html`, new tab handler at the bottom of `popup.js`, and an extension to `setFormatMode`.
+
+Old presets in storage that predate this split (no `formatMode` field) fall through to template mode — this is the only backward-compat code path.
+
 ## Storage
 
 `browser.storage.local` under key `"presets"`. The default preset (page title + URL) is seeded only when storage is empty — editing or deleting it does not bring it back. There is no migration logic; if a future change breaks the preset schema, expect old presets to misbehave.

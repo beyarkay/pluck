@@ -50,11 +50,15 @@ A pipe-separated chain applied left-to-right after extraction:
 
 **Quirk:** `replace:from:to` parses the first `:` as the separator, so `from` cannot contain `:`. Use `regex_remove` or `regex_extract` if you need that.
 
-### Format template
+### Format mode
 
-Use `{key}` for each selector's key. Literal `\n` and `\t` in the template are converted to newline and tab.
+Each preset uses one of two formatting modes, picked by the tab toggle in the edit view:
 
-Example: `£{price} — {url}` → `£450000 — https://example.com/listing/123`
+**Template** (default) — use `{key}` placeholders for each selector. Example: `£{price} — {url}` → `£450000 — https://example.com/listing/123`.
+
+**Separator** — join all selector values in their listed order with a given string. Useful for TSV (`\t`), CSV (`,`), or newline-separated output. Selector order in the edit view is the join order.
+
+In both modes, literal `\t` and `\n` in the template/separator become tab and newline at copy time.
 
 ## Architecture
 
