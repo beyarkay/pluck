@@ -68,6 +68,18 @@
     .btn-discard { background: none; border: none; color: #555; font-size: 11px; cursor: pointer; padding: 4px; }
     .btn-discard:hover { color: #999; }
 
+    /* ── Format mode tabs ── */
+    .format-mode-tabs { display: flex; margin-bottom: 6px; }
+    .mode-btn {
+      background: #2a2a2a; border: 1px solid #444; color: #888;
+      padding: 4px 14px; font-size: 11px; cursor: pointer;
+      font-family: system-ui;
+    }
+    .mode-btn:first-child { border-radius: 4px 0 0 4px; }
+    .mode-btn:last-child  { border-radius: 0 4px 4px 0; border-left: none; }
+    .mode-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .mode-btn:hover:not(.active) { background: #333; color: #ccc; }
+
     /* ── Edit live preview ── */
     .edit-preview-wrap { margin-bottom: 10px; }
     .edit-preview-label { font-size: 10px; color: #555; margin-bottom: 3px; }
@@ -164,9 +176,13 @@
   </div>
 
   <div class="field">
-    <label>Format Template</label>
-    <input type="text" id="edit-format" placeholder="{price},{url}">
-    <div class="format-hint">Use {key} for each selector — e.g.&nbsp; {price} — {url}</div>
+    <label>Format</label>
+    <div class="format-mode-tabs">
+      <button type="button" class="mode-btn active" data-mode="template" id="mode-btn-template">Template</button>
+      <button type="button" class="mode-btn"        data-mode="separator" id="mode-btn-separator">Separator</button>
+    </div>
+    <input type="text" id="edit-format" placeholder="{title} — {url}">
+    <div class="format-hint" id="format-hint">Use {key} for each selector — e.g.&nbsp;{price} — {url}</div>
   </div>
 
   <div class="edit-preview-wrap">

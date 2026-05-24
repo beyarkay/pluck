@@ -6,15 +6,20 @@ const DEFAULT_PRESETS = [
       { key: "title", selector: "title", type: "page", attr: "text", transforms: "" },
       { key: "url",   selector: "url",   type: "page", attr: "text", transforms: "" }
     ],
-    format: "{title} — {url}"
+    formatMode: "template",
+    format: "{title} — {url}",
+    separator: "\\t"
   }
 ];
 
-let presets        = [];
-let editingId      = null;
+let presets         = [];
+let editingId       = null;
 let editingSelectors = [];
-let previewTimer   = null;
-let originalSnapshot = null; // for discard
+let editingFormatMode = "template";
+let editingFormat     = "";
+let editingSeparator  = "";
+let previewTimer    = null;
+let originalSnapshot = null;
 
 // ── Storage ──────────────────────────────────────────────────────────────────
 
@@ -107,10 +112,21 @@ function buildExtractionCode(selectors) {
   })()`;
 }
 
-function applyFormat(template, data) {
-  let out = template.replace(/\\t/g, '\t').replace(/\\n/g, '\n');
+function applyFormat(preset, data) {
+  const unesc = s => (s || '').replace(/\\t/g, '\t').replace(/\\n/g, '\n');
+  if (preset.formatMode === 'separator') {
+    return Object.values(data).join(unesc(preset.separator));
+  }
+  let out = unesc(preset.format);
   for (const [k, v] of Object.entries(data)) out = out.split(`{${k}}`).join(v);
   return out;
+}
+
+function formatPreviewString(preset) {
+  if (preset.formatMode === 'separator') {
+    return preset.selectors.map(s => `{${s.key}}`).join(preset.separator || '');
+  }
+  return preset.format || '';
 }
 
 async function extractPreset(preset) {
@@ -125,7 +141,7 @@ async function copyPreset(preset, btn) {
   const orig = btn.textContent;
   try {
     const data = await extractPreset(preset);
-    await navigator.clipboard.writeText(applyFormat(preset.format, data));
+    await navigator.clipboard.writeText(applyFormat(preset, data));
     btn.textContent = "✓ Copied!"; btn.classList.add("success");
     setTimeout(() => { btn.textContent = orig; btn.classList.remove("success"); }, 1500);
   } catch(err) {
@@ -151,7 +167,7 @@ function renderMain() {
     div.className = "preset";
     div.innerHTML = `
       <div class="preset-header"><span class="preset-name">${esc(preset.name)}</span></div>
-      <div class="preset-format">${esc(preset.format)}</div>
+      <div class="preset-format">${esc(formatPreviewString(preset))}</div>
       <div class="preset-preview">⏳ reading page…</div>
       <button class="btn btn-copy" data-id="${preset.id}">Copy to Clipboard</button>
       <div class="actions">
@@ -162,7 +178,7 @@ function renderMain() {
 
     const previewEl = div.querySelector(".preset-preview");
     extractPreset(preset).then(data => {
-      const formatted = applyFormat(preset.format, data);
+      const formatted = applyFormat(preset, data);
       previewEl.textContent = formatted || "(no values found on this page)";
       previewEl.classList.toggle("preview-warn", Object.values(data).some(v => !v));
     }).catch(() => {
@@ -192,15 +208,44 @@ function openEdit(preset) {
   editingId        = preset?.id || null;
   editingSelectors = preset ? JSON.parse(JSON.stringify(preset.selectors))
                             : [{ key: "value1", selector: "", type: "xpath", attr: "text", transforms: "" }];
-  originalSnapshot = JSON.stringify({ name: preset?.name || "", format: preset?.format || "", selectors: editingSelectors });
+  editingFormatMode = preset?.formatMode === "separator" ? "separator" : "template";
+  editingFormat     = preset?.format    || "";
+  editingSeparator  = preset?.separator || "";
+  originalSnapshot  = JSON.stringify({
+    name: preset?.name || "",
+    formatMode: editingFormatMode,
+    format: editingFormat,
+    separator: editingSeparator,
+    selectors: editingSelectors
+  });
 
   document.getElementById("main-view").style.display = "none";
   document.getElementById("edit-view").style.display = "block";
   document.getElementById("edit-title").textContent  = preset ? "Edit Preset" : "New Preset";
-  document.getElementById("edit-name").value         = preset?.name   || "";
-  document.getElementById("edit-format").value       = preset?.format || "";
+  document.getElementById("edit-name").value         = preset?.name || "";
 
+  setFormatMode(editingFormatMode);
   renderSelectorRows();
+  schedulePreview();
+}
+
+function setFormatMode(mode) {
+  editingFormatMode = mode === "separator" ? "separator" : "template";
+  const input  = document.getElementById("edit-format");
+  const hint   = document.getElementById("format-hint");
+  const btnTpl = document.getElementById("mode-btn-template");
+  const btnSep = document.getElementById("mode-btn-separator");
+  if (editingFormatMode === "separator") {
+    input.value       = editingSeparator;
+    input.placeholder = "\\t  (or , or any string)";
+    hint.textContent  = "Joins selector values in their listed order. Use \\t for tab, \\n for newline.";
+    btnTpl.classList.remove("active"); btnSep.classList.add("active");
+  } else {
+    input.value       = editingFormat;
+    input.placeholder = "{title} — {url}";
+    hint.textContent  = "Use {key} for each selector. \\t and \\n become tab/newline.";
+    btnTpl.classList.add("active"); btnSep.classList.remove("active");
+  }
   schedulePreview();
 }
 
@@ -212,12 +257,19 @@ function schedulePreview() {
 }
 
 async function runEditPreview() {
-  const el     = document.getElementById("edit-preview");
-  const format = document.getElementById("edit-format")?.value || "";
+  const el = document.getElementById("edit-preview");
   if (!el) return;
 
-  const hasSelectors = editingSelectors.some(s => s.selector.trim());
-  if (!hasSelectors || !format.trim()) {
+  const previewPreset = {
+    selectors:  editingSelectors,
+    formatMode: editingFormatMode,
+    format:     editingFormat,
+    separator:  editingSeparator
+  };
+
+  const hasSelectors  = editingSelectors.some(s => s.selector.trim());
+  const needsTemplate = editingFormatMode === "template" && !editingFormat.trim();
+  if (!hasSelectors || needsTemplate) {
     el.textContent = "configure selectors and format above…";
     el.className   = "preview-empty";
     return;
@@ -227,8 +279,8 @@ async function runEditPreview() {
   el.className   = "";
 
   try {
-    const data      = await extractPreset({ selectors: editingSelectors, format });
-    const formatted = applyFormat(format, data);
+    const data      = await extractPreset(previewPreset);
+    const formatted = applyFormat(previewPreset, data);
     const anyEmpty  = Object.values(data).some(v => !v);
     el.textContent  = formatted || "(no values found on this page)";
     el.className    = anyEmpty ? "preview-warn" : "";
@@ -312,18 +364,26 @@ function renderSelectorRows() {
 // ── Save / discard ───────────────────────────────────────────────────────────
 
 async function commitEdit() {
-  const name   = document.getElementById("edit-name").value.trim();
-  const format = document.getElementById("edit-format").value.trim();
-  if (!name)   { alert("Name required"); return false; }
-  if (!format) { alert("Format template required"); return false; }
+  const name = document.getElementById("edit-name").value.trim();
+  if (!name) { alert("Name required"); return false; }
+  if (editingFormatMode === "template" && !editingFormat.trim()) {
+    alert("Format template required"); return false;
+  }
   if (editingSelectors.some(s => !s.key || !s.selector)) {
     alert("All selectors need a key and selector value"); return false;
   }
+  const data = {
+    name,
+    selectors:  editingSelectors,
+    formatMode: editingFormatMode,
+    format:     editingFormat,
+    separator:  editingSeparator
+  };
   if (editingId) {
     const idx = presets.findIndex(p => p.id === editingId);
-    presets[idx] = { id: editingId, name, selectors: editingSelectors, format };
+    presets[idx] = { id: editingId, ...data };
   } else {
-    presets.push({ id: "preset-" + Date.now(), name, selectors: editingSelectors, format });
+    presets.push({ id: "preset-" + Date.now(), ...data });
   }
   await savePresets(presets);
   return true;
@@ -342,7 +402,15 @@ document.getElementById("add-selector-btn").addEventListener("click", () => {
   renderSelectorRows();
 });
 
-document.getElementById("edit-format").addEventListener("input", schedulePreview);
+document.getElementById("edit-format").addEventListener("input", e => {
+  if (editingFormatMode === "separator") editingSeparator = e.target.value;
+  else                                    editingFormat    = e.target.value;
+  schedulePreview();
+});
+
+document.getElementById("mode-btn-template").addEventListener("click",  () => setFormatMode("template"));
+document.getElementById("mode-btn-separator").addEventListener("click", () => setFormatMode("separator"));
+
 document.getElementById("add-btn").addEventListener("click", () => openEdit(null));
 
 // ── Utils ────────────────────────────────────────────────────────────────────
