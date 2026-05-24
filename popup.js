@@ -166,10 +166,12 @@ function renderMain() {
     const div = document.createElement("div");
     div.className = "preset";
     div.innerHTML = `
-      <div class="preset-header"><span class="preset-name">${esc(preset.name)}</span></div>
+      <div class="preset-header">
+        <span class="preset-name">${esc(preset.name)}</span>
+        <button class="btn btn-copy" data-id="${preset.id}">Copy</button>
+      </div>
       <div class="preset-format">${esc(formatPreviewString(preset))}</div>
       <div class="preset-preview">⏳ reading page…</div>
-      <button class="btn btn-copy" data-id="${preset.id}">Copy to Clipboard</button>
       <div class="actions">
         <button class="btn btn-sm edit-btn"    data-id="${preset.id}">Edit</button>
         <button class="btn btn-sm btn-danger delete-btn" data-id="${preset.id}">Delete</button>
