@@ -3,3 +3,4 @@ claude-resume.sh
 web-ext-artifacts/
 *.xpi
 *.zip
+*.mov
