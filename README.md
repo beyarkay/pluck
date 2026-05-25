@@ -4,6 +4,8 @@ A Firefox extension for plucking values off a page with custom selectors and cop
 
 Define a **preset** = a list of selectors (CSS / XPath / `meta` / `page`) + a format template. Click the toolbar icon, see a live preview of the formatted output for the current tab, hit copy.
 
+![Pluck popup open on an OpenRent listing showing the live preview of the formatted output](imgs/hero.png)
+
 ## Features
 
 - **Custom selectors** — pick values via CSS, XPath, `<meta>` tags, or `window.location` fields.
@@ -12,6 +14,8 @@ Define a **preset** = a list of selectors (CSS / XPath / `meta` / `page`) + a fo
 - **Per-selector transforms** — chainable pipeline: `trim`, `numbers_only`, `regex_extract`, `slice`, `replace`, `prepend`/`append`, and more.
 - **Multiple presets** — keep one per site or per workflow.
 - **No network, no telemetry, no background script** — everything runs in the popup; presets live in `browser.storage.local`.
+
+![Plucking data from multiple property listings in sequence (3x speed)](imgs/demo.gif)
 
 ## Setup
 
@@ -24,6 +28,8 @@ Temporary add-ons are removed when Firefox restarts. For permanent install, sign
 ## Usage
 
 The popup shows each preset with a live preview of what it would copy. Click **Copy to Clipboard** to write it to the clipboard. Use **Edit** / **+ New Preset** to manage presets.
+
+![Creating a new preset and pasting the result into Google Sheets (4x speed)](imgs/edit-view.gif)
 
 ### Selector types
 
@@ -66,6 +72,8 @@ Each preset uses one of two formatting modes, picked by the tab toggle in the ed
 **Template** (default) — use `{key}` placeholders for each selector. Example: `£{price} — {url}` → `£450000 — https://example.com/listing/123`.
 
 **Separator** — join all selector values in their listed order with a given string. Useful for TSV (`\t`), CSV (`,`), or newline-separated output. Selector order in the edit view is the join order.
+
+![Edit view in Separator mode](imgs/separator.png)
 
 In both modes, literal `\t` and `\n` in the template/separator become tab and newline at copy time.
 
