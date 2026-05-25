@@ -3,7 +3,7 @@
   "name": "Pluck",
   "version": "1.0",
   "description": "Pluck values off a page with custom selectors and copy them to the clipboard",
-  "permissions": ["activeTab", "clipboardWrite", "storage"],
+  "permissions": ["activeTab", "clipboardWrite", "storage", "menus", "notifications"],
   "icons": {
     "48": "icon.svg",
     "96": "icon.svg"
@@ -12,5 +12,9 @@
     "default_popup": "popup.html",
     "default_title": "Pluck",
     "default_icon": "icon.svg"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
   }
 }
