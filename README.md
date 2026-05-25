@@ -2,6 +2,8 @@
 
 A Firefox extension for plucking values off a page with custom selectors and copying them, formatted, to the clipboard.
 
+You can use this to quickly gather information from various webpages. Less hassle than an automatic web scraper, faster than manually copy-pasting data from different web pages.
+
 Define a **preset** = a list of selectors (CSS / XPath / `meta` / `page`) + a format template. Click the toolbar icon, see a live preview of the formatted output for the current tab, hit copy.
 
 ![Pluck popup open on an OpenRent listing showing the live preview of the formatted output](imgs/hero.png)
