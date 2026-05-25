@@ -4,7 +4,16 @@ A Firefox extension for plucking values off a page with custom selectors and cop
 
 Define a **preset** = a list of selectors (CSS / XPath / `meta` / `page`) + a format template. Click the toolbar icon, see a live preview of the formatted output for the current tab, hit copy.
 
-## Install (development)
+## Features
+
+- **Custom selectors** — pick values via CSS, XPath, `<meta>` tags, or `window.location` fields.
+- **Live preview in the popup** — see the formatted output for the current tab before you copy.
+- **Two formatting modes** — free-form `{key}` template, or join-by-separator (TSV, CSV, newlines, anything).
+- **Per-selector transforms** — chainable pipeline: `trim`, `numbers_only`, `regex_extract`, `slice`, `replace`, `prepend`/`append`, and more.
+- **Multiple presets** — keep one per site or per workflow.
+- **No network, no telemetry, no background script** — everything runs in the popup; presets live in `browser.storage.local`.
+
+## Setup
 
 1. Open `about:debugging#/runtime/this-firefox` in Firefox.
 2. Click **Load Temporary Add-on…** and pick `manifest.json` from this directory.
