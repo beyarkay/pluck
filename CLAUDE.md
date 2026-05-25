@@ -8,14 +8,11 @@ This is a small, personal tool. Resist scope creep — no build pipeline, no tes
 
 ## Layout
 
-Three files plus an icon:
-
-- `manifest.json` — Manifest v2. Browser action with popup. Permissions: `activeTab`, `clipboardWrite`, `storage`.
+- `manifest.json` — Manifest v2. Browser action with popup, persistent background page. Permissions: `activeTab`, `clipboardWrite`, `storage`, `menus`, `notifications`.
 - `popup.html` — Markup + inline CSS. Two views toggled by `display` — `#main-view` (list of presets) and `#edit-view` (edit form).
-- `popup.js` — All behavior. No modules, no bundler.
-- `icon.svg` — Toolbar and manifest icon.
-
-There is no background script.
+- `popup.js` — Popup behavior. No modules, no bundler.
+- `background.js` — Background page. Registers the "Copy XPath to Pluck" page context menu and writes new selectors into presets when items are clicked. See *Context menu* below.
+- `icon.svg` — Toolbar, manifest, and notification icon.
 
 ## How extraction works
 
@@ -51,12 +48,25 @@ Old presets in storage that predate this split (no `formatMode` field) fall thro
 
 `browser.storage.local` under key `"presets"`. The default preset (page title + URL) is seeded only when storage is empty — editing or deleting it does not bring it back. There is no migration logic; if a future change breaks the preset schema, expect old presets to misbehave.
 
+## Context menu
+
+`background.js` adds a "Copy XPath to Pluck" item to the page right-click menu. The submenu is rebuilt whenever `presets` in `storage.local` changes — listening on `storage.onChanged` is enough to keep it fresh.
+
+When the user picks an item:
+1. `menus.onClicked` fires in the background with `info.targetElementId` set.
+2. Background calls `tabs.executeScript` with a generated snippet that calls `browser.menus.getTargetElement(targetElementId)` inside the page, computes an XPath (preferring `//*[@id="..."]` when the id is `[A-Za-z0-9_-]+`, otherwise full nth-of-type path), and returns it.
+3. Background appends a new selector (`type: "xpath"`, `attr: "text"`, key `value_N`) to the chosen preset and saves. Picking "New preset…" creates a fresh preset named after the page's hostname instead.
+4. A `browser.notifications` toast confirms the action.
+
+The popup is not opened automatically — the user views the new selector by opening Pluck themselves. This avoids `browserAction.openPopup()` and its user-gesture flakiness.
+
 ## Future migration to Manifest v3
 
 Not done yet. When the time comes, the touchpoints are:
 
 - `manifest_version: 3`, rename `browser_action` → `action`.
-- `browser.tabs.executeScript({ code })` → `browser.scripting.executeScript({ target, func, args })`. **Important:** MV3 dropped the `code` form — you must pass a function reference plus args, not a string. The current single-string-blob approach will need restructuring.
+- `browser.tabs.executeScript({ code })` → `browser.scripting.executeScript({ target, func, args })`. **Important:** MV3 dropped the `code` form — you must pass a function reference plus args, not a string. The current single-string-blob approach (used in both `popup.js` extraction and `background.js` XPath computation) will need restructuring.
+- `background: { scripts, persistent: true }` → `background: { service_worker: "background.js" }`. The background page becomes an event-driven service worker; the top-level `rebuildMenu()` call needs to be guarded so it only runs when the SW spins up, and storage-state must not be assumed across invocations.
 - Add `host_permissions` if `activeTab` becomes insufficient.
 
 ## Dev loop
